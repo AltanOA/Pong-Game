@@ -1,0 +1,142 @@
+from tkinter import *
+from time import *
+
+WIDTH = 800
+HEIGHT = 500
+xVelocity = 3
+yVelocity = 1.5
+score1int = 00
+score2int = 00
+b1_direction = "down"
+b2_direction = "up"
+
+def move_up(event):
+    canvas.move(player1, 0, -10)
+
+
+def move_down(event):
+    canvas.move(player1, 0, 10)
+
+
+def move_up2(event):
+    canvas.move(player2, 0, -10)
+
+
+def move_down2(event):
+    canvas.move(player2, 0, 10)
+
+def continuous_move_up_and_down():
+    global b1_direction, b2_direction
+    
+    # Move blockade 1
+    if b1_direction == "down":
+        canvas.move(blockade, 0, 10)
+        if canvas.coords(blockade)[3] >= HEIGHT:
+            b1_direction = "up"
+    elif b1_direction == "up":
+        canvas.move(blockade, 0, -10)
+        if canvas.coords(blockade)[1] <= 0:
+            b1_direction = "down"
+
+    # Move blockade 2
+    if b2_direction == "down":
+        canvas.move(blockade2, 0, 10)
+        if canvas.coords(blockade2)[3] >= HEIGHT:
+            b2_direction = "up"
+    elif b2_direction == "up":
+        canvas.move(blockade2, 0, -10)
+        if canvas.coords(blockade2)[1] <= 0:
+            b2_direction = "down"
+
+
+
+
+
+def start_game():
+    global xVelocity, yVelocity
+    canvas.itemconfig(score1, text=score1int)
+    canvas.itemconfig(score2, text=score2int)
+    xVelocity = 3
+    yVelocity = 2
+    canvas.coords(ball, 50, 50, 75, 75)
+    canvas.coords(player1, 40, 200, 35, 300)
+    canvas.coords(player2, 770, 200, 775, 300)
+
+window = Tk()
+
+
+canvas = Canvas(window, width=WIDTH, height=HEIGHT, bg="black")
+
+player1 = canvas.create_rectangle(40, 200, 45, 300, fill="white")
+player2 = canvas.create_rectangle(770, 200, 775, 300, fill="red")
+
+
+middle_circle = canvas.create_oval(350,300,450,200,outline="white",fill="black",width=2)
+middle_border = canvas.create_line(400,0,400,500,fill="white",width=2)
+
+score1 = canvas.create_text(325, 50, text=score1int, font=("Arial", 35), fill="white")
+score2 = canvas.create_text(450, 50, text=score2int, font=("Arial", 35), fill="red")
+
+ball = canvas.create_oval(50, 50, 75, 75, fill="white")
+
+blockade = canvas.create_rectangle(300,350,290,300,fill="grey")
+blockade2 = canvas.create_rectangle(610,350,600,300,fill="grey")
+
+canvas.pack()
+
+
+window.bind("<w>", move_up)
+window.bind("<s>", move_down)
+window.bind("<Up>", move_up2)
+window.bind("<Down>", move_down2)
+
+def game_loop():
+    global xVelocity, yVelocity, score1int, score2int
+    while True:
+        coordinates = canvas.coords(ball)
+        ball_center_x = (coordinates[0] + coordinates[2]) / 2
+
+        # Ball collision with player 1
+        if (coordinates[2] >= 35 and ball_center_x <= 40) and \
+                (coordinates[3] >= canvas.coords(player1)[1] and coordinates[1] <= canvas.coords(player1)[3]):
+            xVelocity = -xVelocity
+
+        # Ball collision with player 2
+        if (coordinates[0] <= 775 and ball_center_x >= 770) and \
+                (coordinates[3] >= canvas.coords(player2)[1] and coordinates[1] <= canvas.coords(player2)[3]):
+            xVelocity = -xVelocity
+
+        # Ball collision with blockade 1
+        if (coordinates[2] >= canvas.coords(blockade)[0] and ball_center_x <= canvas.coords(blockade)[2]) and \
+                (coordinates[3] >= canvas.coords(blockade)[1] and coordinates[1] <= canvas.coords(blockade)[3]):
+            xVelocity = -xVelocity
+
+        # Ball collision with blockade 2
+        if (coordinates[0] <= canvas.coords(blockade2)[2] and ball_center_x >= canvas.coords(blockade2)[0]) and \
+                (coordinates[3] >= canvas.coords(blockade2)[1] and coordinates[1] <= canvas.coords(blockade2)[3]):
+            xVelocity = -xVelocity
+
+        if coordinates[2] >= WIDTH:
+            score1int += 1
+            canvas.itemconfig(score1, text=score1int)
+            start_game()
+
+        elif coordinates[0] <= 0:
+            score2int += 1
+            canvas.itemconfig(score2, text=score2int)
+            start_game()
+
+        if coordinates[3] >= HEIGHT or coordinates[1] <= 0:
+            yVelocity = -yVelocity
+
+        # Move blockades continuously up and down
+        continuous_move_up_and_down()
+
+        canvas.move(ball, xVelocity, yVelocity)
+        window.update()
+        sleep(0.01)
+
+
+
+game_loop()
+window.mainloop()
